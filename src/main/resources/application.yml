@@ -71,13 +71,10 @@ classhub:
       reply-to-email: ${BREVO_REPLY_TO_EMAIL:}
       sandbox: ${BREVO_SANDBOX:false}
     whatsapp:
-      enabled: ${CLASSHUB_WHATSAPP_NOTIFICATIONS_ENABLED:false}
-      graph-api-base-url: ${WHATSAPP_GRAPH_API_BASE_URL:https://graph.facebook.com}
-      graph-api-version: ${WHATSAPP_GRAPH_API_VERSION:v24.0}
-      access-token: ${WHATSAPP_ACCESS_TOKEN:}
-      phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
-      template-name: ${WHATSAPP_TEMPLATE_NAME:classhub_notification}
-      template-language: ${WHATSAPP_TEMPLATE_LANGUAGE:en}
+      enabled: ${SOPRASEND_ENABLED:false}
+      base-url: ${SOPRASEND_BASE_URL:https://wa.sopraent.com}
+      api-key: ${SOPRASEND_API_KEY:}
+      device-id: ${SOPRASEND_DEVICE_ID:}
     reminders:
       enabled: ${CLASSHUB_DEADLINE_REMINDERS_ENABLED:true}
       deadline-reminder-days: 7,3,1,0
