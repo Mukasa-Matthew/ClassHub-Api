@@ -1,9 +1,11 @@
 spring:
   application:
     name: classhub-api
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:classhub}
-    username: ${DB_USERNAME:classhub}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+    username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
@@ -17,14 +19,80 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: ${CLASSHUB_MAX_ATTACHMENT_SIZE}
+      max-request-size: ${CLASSHUB_MAX_ATTACHMENT_SIZE}
 
 server:
   port: 8080
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: ${CLASSHUB_SESSION_TIMEOUT:8h}
+      tracking-modes: cookie
+      cookie:
+        name: CLASSHUB_SESSION
+        http-only: true
+        secure: ${CLASSHUB_COOKIE_SECURE:false}
+        same-site: lax
+
+classhub:
+  cors:
+    # Comma-separated exact origins. Never use "*". Credentials require explicit allow-list.
+    allowed-origins: ${CLASSHUB_CORS_ALLOWED_ORIGINS}
+  storage:
+    # Local filesystem MVP storage (single-instance). Not under web static roots.
+    path: ${CLASSHUB_STORAGE_PATH}
+    max-attachment-size: ${CLASSHUB_MAX_ATTACHMENT_SIZE}
+    max-course-unit-cover-size: ${CLASSHUB_MAX_COURSE_UNIT_COVER_SIZE:5MB}
+  # Future real providers via CLASSHUB_AI_PROVIDER (local|openai|ollama). Only local is wired now.
+  # Student BYOK provider keys are intentionally not implemented in this phase — see docs/BYOK-AI.md.
+  ai:
+    provider: ${CLASSHUB_AI_PROVIDER:local}
+  bootstrap:
+    admin:
+      # Set BOOTSTRAP_ADMIN_EMAIL and BOOTSTRAP_ADMIN_PASSWORD for first-run SUPER_ADMIN creation.
+      # Leave empty after initial setup.
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+      first-name: ${BOOTSTRAP_ADMIN_FIRST_NAME:}
+      last-name: ${BOOTSTRAP_ADMIN_LAST_NAME:}
+  notifications:
+    enabled: ${CLASSHUB_NOTIFICATIONS_ENABLED:true}
+    timezone: ${CLASSHUB_NOTIFICATION_TIMEZONE:Africa/Kampala}
+    web-base-url: ${CLASSHUB_WEB_BASE_URL:http://localhost:5173}
+    email:
+      enabled: ${CLASSHUB_EMAIL_NOTIFICATIONS_ENABLED:false}
+      api-url: ${BREVO_API_URL:https://api.brevo.com/v3/smtp/email}
+      api-key: ${BREVO_API_KEY:}
+      sender-name: ${BREVO_SENDER_NAME:ClassHub}
+      sender-email: ${BREVO_SENDER_EMAIL:}
+      reply-to-email: ${BREVO_REPLY_TO_EMAIL:}
+      sandbox: ${BREVO_SANDBOX:false}
+    whatsapp:
+      enabled: ${CLASSHUB_WHATSAPP_NOTIFICATIONS_ENABLED:false}
+      graph-api-base-url: ${WHATSAPP_GRAPH_API_BASE_URL:https://graph.facebook.com}
+      graph-api-version: ${WHATSAPP_GRAPH_API_VERSION:v24.0}
+      access-token: ${WHATSAPP_ACCESS_TOKEN:}
+      phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
+      template-name: ${WHATSAPP_TEMPLATE_NAME:classhub_notification}
+      template-language: ${WHATSAPP_TEMPLATE_LANGUAGE:en}
+    reminders:
+      enabled: ${CLASSHUB_DEADLINE_REMINDERS_ENABLED:true}
+      deadline-reminder-days: 7,3,1,0
+      scheduler-interval: PT1H
+    delivery:
+      batch-size: 50
+      max-attempts: 3
+      scheduler-interval: PT1M
+      retry-backoff: PT1M,PT5M,PT30M
 
 logging:
   level:
     root: INFO
     com.classhub: INFO
     org.flywaydb: INFO
+    org.springframework.security: INFO
   pattern:
-    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} [%thread] [%X{requestId}] %-5level %logger{36} - %msg%n"
