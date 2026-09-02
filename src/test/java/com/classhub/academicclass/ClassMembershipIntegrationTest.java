@@ -207,6 +207,12 @@ class ClassMembershipIntegrationTest {
                 .andExpect(status().isOk());
 
         MockHttpSession pendingSession = login("pending.student@example.com");
+
+        mockMvc.perform(get("/api/v1/auth/csrf").session(pendingSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.token").isNotEmpty())
+                .andExpect(jsonPath("$.data.headerName").value("X-CSRF-TOKEN"));
+
         mockMvc.perform(get("/api/v1/course-units").session(pendingSession))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value(ErrorCodes.CLASS_MEMBERSHIP_REQUIRED));

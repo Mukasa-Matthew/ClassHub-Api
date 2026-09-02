@@ -19,10 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class ActiveClassMembershipFilter extends OncePerRequestFilter {
 
     private static final Set<String> ALLOWED_WITHOUT_ACTIVE_MEMBERSHIP = Set.of(
-            "/api/v1/auth/login",
-            "/api/v1/auth/register",
-            "/api/v1/auth/logout",
-            "/api/v1/auth/me",
             "/api/v1/me/class-membership",
             "/api/v1/classes/join",
             "/health",
@@ -76,6 +72,9 @@ public class ActiveClassMembershipFilter extends OncePerRequestFilter {
 
     private static boolean isAllowedWithoutMembership(HttpServletRequest request) {
         String path = request.getRequestURI();
+        if (path.startsWith("/api/v1/auth/")) {
+            return true;
+        }
         if (ALLOWED_WITHOUT_ACTIVE_MEMBERSHIP.contains(path)) {
             return true;
         }
