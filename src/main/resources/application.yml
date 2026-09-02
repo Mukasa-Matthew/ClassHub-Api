@@ -35,7 +35,7 @@ server:
         name: CLASSHUB_SESSION
         http-only: true
         secure: ${CLASSHUB_COOKIE_SECURE:false}
-        same-site: lax
+        same-site: ${CLASSHUB_COOKIE_SAME_SITE:lax}
 
 classhub:
   cors:

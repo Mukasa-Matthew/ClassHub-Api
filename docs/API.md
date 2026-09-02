@@ -18,6 +18,8 @@ OpenAPI/Swagger is intentionally not exposed in this phase to avoid public API d
 - CSRF is enabled for state-changing requests.
 - Spring issues an `XSRF-TOKEN` cookie (`HttpOnly=false`) so SPA JavaScript can read it.
 - Send the token on mutating requests as header `X-XSRF-TOKEN`.
+- Cross-site browser clients can bootstrap it with `GET /api/v1/auth/csrf`; send the returned
+  `data.token` in the header named by `data.headerName` and include credentials on both requests.
 - Cookie `SameSite=Lax`; `Secure` follows `CLASSHUB_COOKIE_SECURE`.
 - Login itself requires CSRF in this API (tests and clients must supply the token).
 

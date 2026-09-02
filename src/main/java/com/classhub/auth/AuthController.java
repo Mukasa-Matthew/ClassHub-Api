@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +24,11 @@ public class AuthController {
     public AuthController(AuthService authService, ClassMembershipService classMembershipService) {
         this.authService = authService;
         this.classMembershipService = classMembershipService;
+    }
+
+    @GetMapping("/csrf")
+    public ApiResponse<CsrfTokenResponse> csrf(CsrfToken csrfToken) {
+        return ApiResponse.of(new CsrfTokenResponse(csrfToken.getToken(), csrfToken.getHeaderName()));
     }
 
     @PostMapping("/register")

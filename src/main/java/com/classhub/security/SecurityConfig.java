@@ -30,14 +30,17 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
     private final boolean cookieSecure;
+    private final String cookieSameSite;
 
     public SecurityConfig(
             RestAuthenticationEntryPoint authenticationEntryPoint,
             RestAccessDeniedHandler accessDeniedHandler,
-            @Value("${server.servlet.session.cookie.secure:false}") boolean cookieSecure) {
+            @Value("${server.servlet.session.cookie.secure:false}") boolean cookieSecure,
+            @Value("${server.servlet.session.cookie.same-site:lax}") String cookieSameSite) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.accessDeniedHandler = accessDeniedHandler;
         this.cookieSecure = cookieSecure;
+        this.cookieSameSite = cookieSameSite;
     }
 
     @Bean
@@ -62,7 +65,7 @@ public class SecurityConfig {
             HttpSecurity http, ActiveClassMembershipFilter activeClassMembershipFilter) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfTokenRepository.setCookieCustomizer(cookie -> cookie
-                .sameSite("Lax")
+                .sameSite(cookieSameSite)
                 .secure(cookieSecure));
 
         http
@@ -74,7 +77,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation(fixation -> fixation.migrateSession()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/health", "/ready").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/health", "/ready", "/api/v1/auth/csrf")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register")
                         .permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("SUPER_ADMIN")
