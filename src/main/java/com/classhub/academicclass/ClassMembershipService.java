@@ -41,6 +41,7 @@ public class ClassMembershipService {
         AcademicClass academicClass = academicClassService.requireActiveClassByJoinCode(request.classJoinCode());
         String email = UserService.normalizeEmail(request.email());
         String registrationNumber = UserService.requireRegistrationNumber(request.registrationNumber());
+        String phoneNumber = UserService.requirePhoneNumber(request.phoneNumber());
         NameParts nameParts = splitFullName(request.fullName());
 
         if (userService.existsByEmail(email) || userService.existsByRegistrationNumber(registrationNumber)) {
@@ -52,7 +53,7 @@ public class ClassMembershipService {
                     nameParts.firstName(),
                     nameParts.lastName(),
                     email,
-                    null,
+                    phoneNumber,
                     request.password(),
                     UserRole.STUDENT,
                     UserStatus.ACTIVE,

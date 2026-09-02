@@ -494,7 +494,7 @@ class ClassMembershipHardeningIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"fullName":"%s","email":"%s","registrationNumber":"%s",
-                                 "password":"%s","classJoinCode":"%s"}
+                                 "phoneNumber":"+256770000002","password":"%s","classJoinCode":"%s"}
                                 """.formatted(fullName, email, registrationNumber, PASSWORD, joinCode)))
                 .andExpect(expectedStatus);
     }

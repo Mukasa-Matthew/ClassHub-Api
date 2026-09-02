@@ -172,6 +172,7 @@ class ClassMembershipIntegrationTest {
                                   "fullName":"New Student",
                                   "email":"new.student@example.com",
                                   "registrationNumber":"REG-1001",
+                                  "phoneNumber":"+256770000003",
                                   "password":"%s",
                                   "classJoinCode":"%s"
                                 }
@@ -198,6 +199,7 @@ class ClassMembershipIntegrationTest {
                                   "fullName":"Pending Student",
                                   "email":"pending.student@example.com",
                                   "registrationNumber":"REG-1002",
+                                  "phoneNumber":"+256770000004",
                                   "password":"%s",
                                   "classJoinCode":"%s"
                                 }
