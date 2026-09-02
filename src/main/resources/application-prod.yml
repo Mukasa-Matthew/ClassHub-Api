@@ -1,0 +1,38 @@
+# Production profile — activate with SPRING_PROFILES_ACTIVE=prod
+# Secrets must come from environment variables / secret manager, never from this file.
+
+server:
+  forward-headers-strategy: framework
+  error:
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+  servlet:
+    session:
+      timeout: ${CLASSHUB_SESSION_TIMEOUT:8h}
+      cookie:
+        # Prefer HTTPS-only cookies in production; override only for unusual terminations.
+        secure: ${CLASSHUB_COOKIE_SECURE:true}
+
+classhub:
+  auth:
+    password-reset:
+      signing-key: ${CLASSHUB_PASSWORD_RESET_SIGNING_KEY}
+    class-rep-setup:
+      signing-key: ${CLASSHUB_ACCOUNT_SETUP_SIGNING_KEY}
+
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    root: WARN
+    com.classhub: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql: WARN
+    org.springframework.security: WARN
+    org.flywaydb: INFO

@@ -45,18 +45,18 @@ class ClassHubApplicationTests {
     @Test
     void flywayMigrationRanSuccessfully() {
         assertThat(flyway.info().current()).isNotNull();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("18");
         assertThat(flyway.info().current().getState().isApplied()).isTrue();
 
         Integer applied = jdbcTemplate.queryForObject(
                 "select count(*) from flyway_schema_history where success = true",
                 Integer.class);
-        assertThat(applied).isGreaterThanOrEqualTo(1);
+        assertThat(applied).isGreaterThanOrEqualTo(8);
     }
 
     @Test
-    void hibernateValidationSucceedsWithNoEntities() {
-        // Context startup with ddl-auto=validate and zero entities is the assertion.
+    void hibernateValidationSucceedsWithMappedEntities() {
+        // Context startup with ddl-auto=validate against Flyway schema is the assertion.
         assertThat(dataSource).isNotNull();
     }
 
