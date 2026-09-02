@@ -3,6 +3,7 @@ package com.classhub.academicclass;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,18 +89,74 @@ class ClassMembershipIntegrationTest {
                         .content("""
                                 {
                                   "name":"BSIT Year 3",
-                                  "programmeName":"Bachelor of Science in IT",
-                                  "programmeCode":"BSIT"
+                                  "programmeName":"  Bachelor of Science in IT  ",
+                                  "programmeCode":"BSIT",
+                                  "studyYear":3,
+                                  "semester":1,
+                                  "academicYear":2026
                                 }
                                 """))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.programmeName").value("Bachelor of Science in IT"))
+                .andExpect(jsonPath("$.data.studyYear").value(3))
+                .andExpect(jsonPath("$.data.semester").value(1))
+                .andExpect(jsonPath("$.data.academicYear").value(2026))
                 .andExpect(jsonPath("$.data.joinCode").isNotEmpty())
                 .andReturn();
 
         String joinCode = com.jayway.jsonpath.JsonPath.read(
                 created.getResponse().getContentAsString(), "$.data.joinCode");
         assertThat(joinCode).hasSize(6);
-        assertThat(academicClassRepository.findByJoinCodeIgnoreCase(joinCode)).isPresent();
+        AcademicClass persisted = academicClassRepository.findByJoinCodeIgnoreCase(joinCode).orElseThrow();
+        assertThat(persisted.getProgrammeName()).isEqualTo("Bachelor of Science in IT");
+        assertThat(persisted.getStudyYear()).isEqualTo(3);
+        assertThat(persisted.getSemester()).isEqualTo(1);
+        assertThat(persisted.getAcademicYear()).isEqualTo(2026);
+    }
+
+    @Test
+    void existingClassIsSafelyBackfilledWithNormalizedStudyStructure() {
+        AcademicClass existing = membershipTestSupport.defaultClass();
+
+        assertThat(existing.getProgrammeName()).isEqualTo(existing.getName());
+        assertThat(existing.getStudyYear()).isEqualTo(1);
+        assertThat(existing.getSemester()).isEqualTo(1);
+        assertThat(existing.getAcademicYear()).isBetween(1900, 2100);
+    }
+
+    @Test
+    void adminCanPartiallyUpdateStudyStructureWithoutChangingClassIdentity() throws Exception {
+        AcademicClass existing = membershipTestSupport.defaultClass();
+        UUID classId = existing.getId();
+        String joinCode = existing.getJoinCode();
+
+        mockMvc.perform(patch("/api/v1/admin/classes/{id}", classId)
+                        .session(adminSession)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "programmeName":"  Software Engineering  ",
+                                  "studyYear":4,
+                                  "semester":2,
+                                  "academicYear":2027
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(classId.toString()))
+                .andExpect(jsonPath("$.data.programmeName").value("Software Engineering"))
+                .andExpect(jsonPath("$.data.studyYear").value(4))
+                .andExpect(jsonPath("$.data.semester").value(2))
+                .andExpect(jsonPath("$.data.academicYear").value(2027))
+                .andExpect(jsonPath("$.data.joinCode").value(joinCode));
+    }
+
+    @Test
+    void classStudyStructureValidationRejectsBlankOrUnreasonableValues() throws Exception {
+        assertInvalidClassCreate("", 1, 1, 2026);
+        assertInvalidClassCreate("Programme", 0, 1, 2026);
+        assertInvalidClassCreate("Programme", 1, 5, 2026);
+        assertInvalidClassCreate("Programme", 1, 1, 2101);
     }
 
     @Test
@@ -196,7 +253,14 @@ class ClassMembershipIntegrationTest {
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"name":"Class B","programmeName":"Programme B","programmeCode":"CLB"}
+                                {
+                                  "name":"Class B",
+                                  "programmeName":"Programme B",
+                                  "programmeCode":"CLB",
+                                  "studyYear":2,
+                                  "semester":2,
+                                  "academicYear":2026
+                                }
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn();
@@ -226,5 +290,24 @@ class ClassMembershipIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         return (MockHttpSession) result.getRequest().getSession(false);
+    }
+
+    private void assertInvalidClassCreate(
+            String programmeName, int studyYear, int semester, int academicYear) throws Exception {
+        mockMvc.perform(post("/api/v1/admin/classes")
+                        .session(adminSession)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name":"Validation Class",
+                                  "programmeName":"%s",
+                                  "studyYear":%d,
+                                  "semester":%d,
+                                  "academicYear":%d
+                                }
+                                """.formatted(programmeName, studyYear, semester, academicYear)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value(ErrorCodes.VALIDATION_ERROR));
     }
 }

@@ -78,6 +78,9 @@ class SemesterTimelineIntegrationTest {
                 "Second Class",
                 "Second Programme",
                 "SCP",
+                2,
+                1,
+                2026,
                 joinCodeGenerator.generateUnique(classRepository),
                 AcademicClassStatus.ACTIVE));
 

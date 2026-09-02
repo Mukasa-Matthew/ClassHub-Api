@@ -18,6 +18,8 @@ OpenAPI/Swagger is intentionally not exposed in this phase to avoid public API d
 - CSRF is enabled for state-changing requests.
 - Spring issues an `XSRF-TOKEN` cookie (`HttpOnly=false`) so SPA JavaScript can read it.
 - Send the token on mutating requests as header `X-XSRF-TOKEN`.
+- Cross-site browser clients can bootstrap it with `GET /api/v1/auth/csrf`; send the returned
+  `data.token` in the header named by `data.headerName` and include credentials on both requests.
 - Cookie `SameSite=Lax`; `Secure` follows `CLASSHUB_COOKIE_SECURE`.
 - Login itself requires CSRF in this API (tests and clients must supply the token).
 
@@ -77,6 +79,12 @@ Correlation: every response includes `X-Request-Id` (accepted if safe, otherwise
 - `GET /health` — process up
 - `GET /ready` — DB connectivity
 - `POST /api/v1/auth/login`
+- `POST /api/v1/auth/class-rep/register`
+- `POST /api/v1/auth/class-rep/setup-link/reissue`
+- `POST /api/v1/auth/class-rep/complete-account`
+- `POST /api/v1/auth/forgot-password`
+- `POST /api/v1/auth/forgot-password/verify`
+- `POST /api/v1/auth/reset-password`
 
 ## Endpoint groups
 
@@ -84,6 +92,19 @@ Correlation: every response includes `X-Request-Id` (accepted if safe, otherwise
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
+- `POST /api/v1/auth/forgot-password` — `{ "identifier": "email or phone" }`; always generic `202`
+- `POST /api/v1/auth/forgot-password/verify` — `{ "identifier", "otp" }`; returns a short-lived reset token
+- `POST /api/v1/auth/reset-password` — `{ "resetToken", "newPassword" }`; returns `204`
+
+Password reset OTPs expire after 10 minutes, are single-use, and allow at most five failed
+verification attempts. Plaintext OTPs and reset tokens are never persisted. Set
+`CLASSHUB_PASSWORD_RESET_SIGNING_KEY` to a strong, password-reset-specific production secret.
+Successful resets expire all registered sessions and queue email/WhatsApp security notices.
+
+Class Rep self-registration creates a `PENDING_SETUP` account and queues email and WhatsApp
+deliveries. Setup links expire after `CLASSHUB_ACCOUNT_SETUP_TOKEN_TTL` (24 hours by default),
+are single-use, and are generated just-in-time by the delivery worker. Only a SHA-256 token hash
+is stored. Configure `CLASSHUB_ACCOUNT_SETUP_SIGNING_KEY` with a strong production secret.
 
 ### Admin users (`SUPER_ADMIN`)
 - `GET/POST /api/v1/admin/users`

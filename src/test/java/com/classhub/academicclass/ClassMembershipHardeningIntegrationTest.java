@@ -79,7 +79,8 @@ class ClassMembershipHardeningIntegrationTest {
 
         classA = membershipSupport.defaultClass();
         classB = classRepository.saveAndFlush(new AcademicClass(
-                "Second Class", "Second Programme", "SCP", joinCodeGenerator.generateUnique(classRepository),
+                "Second Class", "Second Programme", "SCP", 2, 1, 2026,
+                joinCodeGenerator.generateUnique(classRepository),
                 AcademicClassStatus.ACTIVE));
         membershipSupport.activateClassRep(classA, repA);
         membershipSupport.activateClassRep(classB, repB);
@@ -319,7 +320,14 @@ class ClassMembershipHardeningIntegrationTest {
                         .content("{\"joinCode\":\"%s\"}".formatted(classA.getJoinCode())))
                 .andExpect(status().isForbidden());
 
-        classB.updateDetails(classB.getName(), classB.getProgrammeName(), classB.getProgrammeCode(), AcademicClassStatus.INACTIVE);
+        classB.updateDetails(
+                classB.getName(),
+                classB.getProgrammeName(),
+                classB.getProgrammeCode(),
+                classB.getStudyYear(),
+                classB.getSemester(),
+                classB.getAcademicYear(),
+                AcademicClassStatus.INACTIVE);
         classRepository.saveAndFlush(classB);
         mockMvc.perform(post("/api/v1/classes/join").session(existingSession).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)

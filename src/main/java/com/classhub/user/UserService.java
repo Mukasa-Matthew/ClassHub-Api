@@ -72,6 +72,44 @@ public class UserService {
         }
     }
 
+    @Transactional
+    public User createPendingClassRep(String firstName, String lastName, String email, String phoneNumber) {
+        String normalizedFirstName = requireText(firstName, "firstName");
+        String normalizedLastName = requireText(lastName, "lastName");
+        String normalizedEmail = normalizeEmail(email);
+        String normalizedPhone = requirePhoneNumber(phoneNumber);
+        if (userRepository.existsByEmail(normalizedEmail)
+                || userRepository.existsByPhoneNumber(normalizedPhone)) {
+            throw userAlreadyExists();
+        }
+        try {
+            return userRepository.saveAndFlush(new User(
+                    normalizedFirstName,
+                    normalizedLastName,
+                    normalizedEmail,
+                    normalizedPhone,
+                    null,
+                    UserRole.CLASS_REP,
+                    UserStatus.PENDING_SETUP,
+                    false,
+                    null));
+        } catch (DataIntegrityViolationException ex) {
+            throw userAlreadyExists();
+        }
+    }
+
+    @Transactional
+    public void completeAccountSetup(User user, String rawPassword) {
+        user.completeAccountSetup(passwordEncoder.encode(requireText(rawPassword, "password")));
+        userRepository.saveAndFlush(user);
+    }
+
+    @Transactional
+    public void changePassword(User user, String rawPassword) {
+        user.changePassword(passwordEncoder.encode(requireText(rawPassword, "password")));
+        userRepository.saveAndFlush(user);
+    }
+
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(normalizeEmail(email));
@@ -113,7 +151,7 @@ public class UserService {
         return normalized;
     }
 
-    static String normalizePhoneNumber(String phoneNumber) {
+    public static String normalizePhoneNumber(String phoneNumber) {
         if (phoneNumber == null) {
             return null;
         }
@@ -122,6 +160,17 @@ public class UserService {
             return null;
         }
         return trimmed;
+    }
+
+    public static String requirePhoneNumber(String phoneNumber) {
+        String normalized = normalizePhoneNumber(phoneNumber);
+        if (normalized == null || !normalized.matches("\\+?[0-9][0-9 ()-]{7,30}[0-9]")) {
+            throw new ApplicationException(
+                    ErrorCodes.INVALID_USER_DATA,
+                    "phoneNumber is invalid",
+                    HttpStatus.BAD_REQUEST);
+        }
+        return normalized;
     }
 
     public static String normalizeRegistrationNumber(String registrationNumber) {
@@ -169,5 +218,12 @@ public class UserService {
                     field + " is required",
                     HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private static ApplicationException userAlreadyExists() {
+        return new ApplicationException(
+                ErrorCodes.USER_ALREADY_EXISTS,
+                "An account with this email or phone number already exists",
+                HttpStatus.CONFLICT);
     }
 }

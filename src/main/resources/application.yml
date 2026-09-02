@@ -35,9 +35,19 @@ server:
         name: CLASSHUB_SESSION
         http-only: true
         secure: ${CLASSHUB_COOKIE_SECURE:false}
-        same-site: lax
+        same-site: ${CLASSHUB_COOKIE_SAME_SITE:lax}
 
 classhub:
+  auth:
+    password-reset:
+      signing-key: ${CLASSHUB_PASSWORD_RESET_SIGNING_KEY:classhub-local-password-reset-key-change-me}
+      otp-ttl: PT10M
+      reset-token-ttl: PT10M
+      resend-cooldown: PT1M
+      maximum-attempts: 5
+    class-rep-setup:
+      signing-key: ${CLASSHUB_ACCOUNT_SETUP_SIGNING_KEY:classhub-local-development-key-change-me}
+      token-ttl: ${CLASSHUB_ACCOUNT_SETUP_TOKEN_TTL:PT24H}
   cors:
     # Comma-separated exact origins. Never use "*". Credentials require explicit allow-list.
     allowed-origins: ${CLASSHUB_CORS_ALLOWED_ORIGINS}
@@ -71,13 +81,10 @@ classhub:
       reply-to-email: ${BREVO_REPLY_TO_EMAIL:}
       sandbox: ${BREVO_SANDBOX:false}
     whatsapp:
-      enabled: ${CLASSHUB_WHATSAPP_NOTIFICATIONS_ENABLED:false}
-      graph-api-base-url: ${WHATSAPP_GRAPH_API_BASE_URL:https://graph.facebook.com}
-      graph-api-version: ${WHATSAPP_GRAPH_API_VERSION:v24.0}
-      access-token: ${WHATSAPP_ACCESS_TOKEN:}
-      phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
-      template-name: ${WHATSAPP_TEMPLATE_NAME:classhub_notification}
-      template-language: ${WHATSAPP_TEMPLATE_LANGUAGE:en}
+      enabled: ${SOPRASEND_ENABLED:false}
+      base-url: ${SOPRASEND_BASE_URL:https://wa.sopraent.com}
+      api-key: ${SOPRASEND_API_KEY:}
+      device-id: ${SOPRASEND_DEVICE_ID:}
     reminders:
       enabled: ${CLASSHUB_DEADLINE_REMINDERS_ENABLED:true}
       deadline-reminder-days: 7,3,1,0

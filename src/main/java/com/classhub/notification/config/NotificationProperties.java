@@ -109,12 +109,9 @@ public class NotificationProperties {
 
     public static class WhatsApp {
         private boolean enabled = false;
-        private String graphApiBaseUrl = "https://graph.facebook.com";
-        private String graphApiVersion = "v24.0";
-        private String accessToken;
-        private String phoneNumberId;
-        private String templateName = "classhub_notification";
-        private String templateLanguage = "en";
+        private String baseUrl = "https://wa.sopraent.com";
+        private String apiKey;
+        private String deviceId;
 
         public boolean isEnabled() {
             return enabled;
@@ -124,18 +121,12 @@ public class NotificationProperties {
             this.enabled = enabled;
         }
 
-        public String getGraphApiBaseUrl() { return graphApiBaseUrl; }
-        public void setGraphApiBaseUrl(String graphApiBaseUrl) { this.graphApiBaseUrl = graphApiBaseUrl; }
-        public String getGraphApiVersion() { return graphApiVersion; }
-        public void setGraphApiVersion(String graphApiVersion) { this.graphApiVersion = graphApiVersion; }
-        public String getAccessToken() { return accessToken; }
-        public void setAccessToken(String accessToken) { this.accessToken = accessToken; }
-        public String getPhoneNumberId() { return phoneNumberId; }
-        public void setPhoneNumberId(String phoneNumberId) { this.phoneNumberId = phoneNumberId; }
-        public String getTemplateName() { return templateName; }
-        public void setTemplateName(String templateName) { this.templateName = templateName; }
-        public String getTemplateLanguage() { return templateLanguage; }
-        public void setTemplateLanguage(String templateLanguage) { this.templateLanguage = templateLanguage; }
+        public String getBaseUrl() { return baseUrl; }
+        public void setBaseUrl(String baseUrl) { this.baseUrl = baseUrl; }
+        public String getApiKey() { return apiKey; }
+        public void setApiKey(String apiKey) { this.apiKey = apiKey; }
+        public String getDeviceId() { return deviceId; }
+        public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
     }
 
     public static class Reminders {

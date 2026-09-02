@@ -19,7 +19,7 @@ This document describes the provider-agnostic notification foundation in the Cla
 
 - **IN_APP** — always enabled; stored in `notifications` table (existing inbox APIs).
 - **EMAIL** — outbox delivery through Brevo's transactional email API.
-- **WHATSAPP** — outbox delivery through Meta WhatsApp Cloud API using an approved utility template.
+- **WHATSAPP** — outbox delivery through the provider-neutral adapter boundary; SopraSend is the configured provider and remains disabled by default.
 
 ## Delivery statuses
 
@@ -65,7 +65,7 @@ Worker (`NotificationDeliveryWorker`):
 - Uses `FOR UPDATE SKIP LOCKED` on PostgreSQL for concurrent safety
 - Adapter interface: `NotificationDeliveryAdapter`
 
-Provider adapters store Brevo's `messageId` or Meta's `wamid`. Credentials and provider response bodies are never logged.
+Provider adapters store Brevo's `messageId` or SopraSend's accepted `message_id`. Credentials and provider response bodies are never logged.
 
 ## Idempotency
 
@@ -94,18 +94,16 @@ IN_APP is mandatory and not configurable.
 | `CLASSHUB_NOTIFICATION_TIMEZONE` | `Africa/Kampala` | Deadline formatting and reminder day boundaries |
 | `CLASSHUB_WEB_BASE_URL` | `http://localhost:5173` | Compose action URLs in adapters |
 | `CLASSHUB_EMAIL_NOTIFICATIONS_ENABLED` | `false` | Global Email channel |
-| `CLASSHUB_WHATSAPP_NOTIFICATIONS_ENABLED` | `false` | Global WhatsApp channel |
+| `SOPRASEND_ENABLED` | `false` | SopraSend WhatsApp provider switch |
 | `CLASSHUB_DEADLINE_REMINDERS_ENABLED` | `true` | Reminder scheduler |
 | `BREVO_API_KEY` | empty | Brevo transactional-email API key |
 | `BREVO_SENDER_NAME` | `ClassHub` | Sender display name |
 | `BREVO_SENDER_EMAIL` | empty | Sender address verified in Brevo |
 | `BREVO_REPLY_TO_EMAIL` | empty | Optional reply-to address |
 | `BREVO_SANDBOX` | `false` | Validate and drop email rather than delivering it |
-| `WHATSAPP_ACCESS_TOKEN` | empty | Meta system-user access token |
-| `WHATSAPP_PHONE_NUMBER_ID` | empty | WhatsApp Business phone-number ID |
-| `WHATSAPP_GRAPH_API_VERSION` | `v24.0` | Versioned Meta Graph API path; update through env when needed |
-| `WHATSAPP_TEMPLATE_NAME` | `classhub_notification` | Approved utility-template name |
-| `WHATSAPP_TEMPLATE_LANGUAGE` | `en` | Approved template language code |
+| `SOPRASEND_BASE_URL` | `https://wa.sopraent.com` | SopraSend API base URL |
+| `SOPRASEND_API_KEY` | empty | Backend-only SopraSend bearer key |
+| `SOPRASEND_DEVICE_ID` | empty | Connected SopraSend device ID |
 
 Spring properties under `classhub.notifications.*` in `application.yml`.
 
@@ -129,13 +127,13 @@ All friendly deadline strings and reminder “deadline day” logic use `classhu
 
 ClassHub renders escaped HTML itself, so a Brevo dashboard template ID is not required. Brevo API acceptance is recorded with its returned `messageId`.
 
-## Meta WhatsApp setup
+## SopraSend WhatsApp setup
 
-1. Create a Meta business portfolio, WhatsApp Business Account, and registered business phone number.
-2. Create and obtain approval for `docs/provider-templates/whatsapp-classhub-notification.md`.
-3. Create a system-user token with `whatsapp_business_messaging`; avoid short-lived dashboard tokens in production.
-4. Fill the `WHATSAPP_*` entries in `.env`, enable the channel, and restart the API.
-5. Students need an international-format phone number and must opt in through notification preferences.
+1. Connect a dedicated WhatsApp Business number as a SopraSend device.
+2. Create a backend-only SopraSend API key and record the device ID.
+3. Fill the `SOPRASEND_*` entries in `.env` without committing the key.
+4. Explicitly opt in one controlled test student before setting `SOPRASEND_ENABLED=true`.
+5. Students need a supported international-format phone number and must opt in through notification preferences.
 
 ## Remaining work
 

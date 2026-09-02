@@ -15,6 +15,12 @@ public final class ErrorCodes {
     public static final String AUTHENTICATION_FAILED = "AUTHENTICATION_FAILED";
     public static final String ACCOUNT_NOT_ACTIVE = "ACCOUNT_NOT_ACTIVE";
     public static final String UNAUTHENTICATED = "UNAUTHENTICATED";
+    public static final String INVALID_ACCOUNT_SETUP_TOKEN = "INVALID_ACCOUNT_SETUP_TOKEN";
+    public static final String EXPIRED_ACCOUNT_SETUP_TOKEN = "EXPIRED_ACCOUNT_SETUP_TOKEN";
+    public static final String ONBOARDING_RATE_LIMITED = "ONBOARDING_RATE_LIMITED";
+    public static final String INVALID_PASSWORD_RESET_OTP = "INVALID_PASSWORD_RESET_OTP";
+    public static final String INVALID_PASSWORD_RESET_TOKEN = "INVALID_PASSWORD_RESET_TOKEN";
+    public static final String PASSWORD_RESET_RATE_LIMITED = "PASSWORD_RESET_RATE_LIMITED";
     public static final String FORBIDDEN = "FORBIDDEN";
 
     public static final String INVALID_ROLE_CHANGE = "INVALID_ROLE_CHANGE";

@@ -5,6 +5,7 @@ import com.classhub.auth.AuthService;
 import com.classhub.auth.RegisterRequest;
 import com.classhub.common.api.ErrorCodes;
 import com.classhub.common.exception.ApplicationException;
+import com.classhub.notification.NotificationOrchestrator;
 import com.classhub.user.CreateUserCommand;
 import com.classhub.user.User;
 import com.classhub.user.UserRole;
@@ -22,14 +23,17 @@ public class ClassMembershipService {
     private final AcademicClassService academicClassService;
     private final ClassMembershipRepository membershipRepository;
     private final UserService userService;
+    private final NotificationOrchestrator notificationOrchestrator;
 
     public ClassMembershipService(
             AcademicClassService academicClassService,
             ClassMembershipRepository membershipRepository,
-            UserService userService) {
+            UserService userService,
+            NotificationOrchestrator notificationOrchestrator) {
         this.academicClassService = academicClassService;
         this.membershipRepository = membershipRepository;
         this.userService = userService;
+        this.notificationOrchestrator = notificationOrchestrator;
     }
 
     @Transactional
@@ -102,7 +106,9 @@ public class ClassMembershipService {
                 MembershipStatus.PENDING,
                 Instant.now());
         try {
-            return membershipRepository.saveAndFlush(membership);
+            ClassMembership saved = membershipRepository.saveAndFlush(membership);
+            notificationOrchestrator.onClassJoinRequested(saved);
+            return saved;
         } catch (DataIntegrityViolationException ex) {
             throw membershipConflict();
         }

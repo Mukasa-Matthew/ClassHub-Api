@@ -5,6 +5,7 @@ import com.classhub.audit.AuditEntityTypes;
 import com.classhub.audit.AuditService;
 import com.classhub.common.api.ErrorCodes;
 import com.classhub.common.exception.ApplicationException;
+import com.classhub.notification.NotificationOrchestrator;
 import com.classhub.user.User;
 import com.classhub.user.UserService;
 import java.time.Instant;
@@ -25,6 +26,7 @@ public class ClassRepMembershipService {
     private final JoinCodeGenerator joinCodeGenerator;
     private final UserService userService;
     private final AuditService auditService;
+    private final NotificationOrchestrator notificationOrchestrator;
 
     public ClassRepMembershipService(
             AcademicClassRepository academicClassRepository,
@@ -32,13 +34,15 @@ public class ClassRepMembershipService {
             ClassMembershipAccessService accessService,
             JoinCodeGenerator joinCodeGenerator,
             UserService userService,
-            AuditService auditService) {
+            AuditService auditService,
+            NotificationOrchestrator notificationOrchestrator) {
         this.academicClassRepository = academicClassRepository;
         this.membershipRepository = membershipRepository;
         this.accessService = accessService;
         this.joinCodeGenerator = joinCodeGenerator;
         this.userService = userService;
         this.auditService = auditService;
+        this.notificationOrchestrator = notificationOrchestrator;
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +71,7 @@ public class ClassRepMembershipService {
         User approver = userService.getById(classRepUserId);
         membership.approve(approver, Instant.now());
         ClassMembership saved = membershipRepository.saveAndFlush(membership);
+        notificationOrchestrator.onClassJoinApproved(saved);
         auditService.record(
                 AuditAction.CLASS_MEMBER_APPROVED,
                 AuditEntityTypes.CLASS_MEMBERSHIP,
@@ -85,6 +90,7 @@ public class ClassRepMembershipService {
         }
         membership.reject();
         ClassMembership saved = membershipRepository.saveAndFlush(membership);
+        notificationOrchestrator.onClassJoinRejected(saved);
         auditService.record(
                 AuditAction.CLASS_MEMBER_REJECTED,
                 AuditEntityTypes.CLASS_MEMBERSHIP,
@@ -116,6 +122,7 @@ public class ClassRepMembershipService {
         }
         membership.deactivate();
         ClassMembership saved = membershipRepository.saveAndFlush(membership);
+        notificationOrchestrator.onClassMemberDeactivated(saved);
         auditService.record(
                 AuditAction.CLASS_MEMBER_DEACTIVATED,
                 AuditEntityTypes.CLASS_MEMBERSHIP,
@@ -144,6 +151,7 @@ public class ClassRepMembershipService {
         User approver = userService.getById(classRepUserId);
         membership.reactivate(approver, Instant.now());
         ClassMembership saved = membershipRepository.saveAndFlush(membership);
+        notificationOrchestrator.onClassMemberReactivated(saved);
         auditService.record(
                 AuditAction.CLASS_MEMBER_REACTIVATED,
                 AuditEntityTypes.CLASS_MEMBERSHIP,
@@ -175,7 +183,10 @@ public class ClassRepMembershipService {
                         academicClass.getId(),
                         academicClass.getName(),
                         academicClass.getProgrammeName(),
-                        academicClass.getProgrammeCode()),
+                        academicClass.getProgrammeCode(),
+                        academicClass.getStudyYear(),
+                        academicClass.getSemester(),
+                        academicClass.getAcademicYear()),
                 members);
     }
 
