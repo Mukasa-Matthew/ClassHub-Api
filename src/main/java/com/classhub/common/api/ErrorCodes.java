@@ -47,6 +47,8 @@ public final class ErrorCodes {
 
     public static final String NOTIFICATION_NOT_FOUND = "NOTIFICATION_NOT_FOUND";
     public static final String INVALID_NOTIFICATION_DATA = "INVALID_NOTIFICATION_DATA";
+    public static final String INVALID_PUSH_SUBSCRIPTION = "INVALID_PUSH_SUBSCRIPTION";
+    public static final String PUSH_SUBSCRIPTION_CONFLICT = "PUSH_SUBSCRIPTION_CONFLICT";
 
     public static final String ATTACHMENT_NOT_FOUND = "ATTACHMENT_NOT_FOUND";
     public static final String ATTACHMENT_NOT_ALLOWED = "ATTACHMENT_NOT_ALLOWED";

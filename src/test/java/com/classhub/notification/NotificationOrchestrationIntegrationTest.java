@@ -173,10 +173,12 @@ class NotificationOrchestrationIntegrationTest {
         assertThat(notes.get(0).getMessage()).contains("Cyber Security");
 
         List<NotificationDelivery> deliveries = deliveryRepository.findAll();
-        assertThat(deliveries).hasSize(9);
+        assertThat(deliveries).hasSize(12);
         assertThat(deliveries.stream().filter(d -> d.getChannel() == NotificationChannel.EMAIL))
                 .allMatch(d -> d.getStatus() == DeliveryStatus.SKIPPED);
         assertThat(deliveries.stream().filter(d -> d.getChannel() == NotificationChannel.WHATSAPP))
+                .allMatch(d -> d.getStatus() == DeliveryStatus.SKIPPED);
+        assertThat(deliveries.stream().filter(d -> d.getChannel() == NotificationChannel.PUSH))
                 .allMatch(d -> d.getStatus() == DeliveryStatus.SKIPPED);
 
         flushDeliveriesForWorker();

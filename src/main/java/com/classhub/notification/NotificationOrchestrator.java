@@ -270,6 +270,7 @@ public class NotificationOrchestrator {
             case NotificationEligibilityService.SKIP_PROVIDER_DISABLED -> "Channel provider not configured";
             case NotificationEligibilityService.SKIP_PREFERENCE_DISABLED -> "User preference disabled";
             case NotificationEligibilityService.SKIP_NO_CONTACT -> "No contact available";
+            case NotificationEligibilityService.SKIP_NO_SUBSCRIPTION -> "No push subscription available";
             default -> "Not eligible";
         };
     }

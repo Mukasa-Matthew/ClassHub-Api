@@ -85,6 +85,11 @@ classhub:
       base-url: ${SOPRASEND_BASE_URL:https://wa.sopraent.com}
       api-key: ${SOPRASEND_API_KEY:}
       device-id: ${SOPRASEND_DEVICE_ID:}
+    push:
+      enabled: ${CLASSHUB_PUSH_NOTIFICATIONS_ENABLED:false}
+      vapid-public-key: ${CLASSHUB_VAPID_PUBLIC_KEY:}
+      vapid-private-key: ${CLASSHUB_VAPID_PRIVATE_KEY:}
+      subject: ${CLASSHUB_VAPID_SUBJECT:}
     reminders:
       enabled: ${CLASSHUB_DEADLINE_REMINDERS_ENABLED:true}
       deadline-reminder-days: 7,3,1,0

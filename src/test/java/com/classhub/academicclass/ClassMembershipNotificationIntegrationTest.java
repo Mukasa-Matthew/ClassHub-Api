@@ -99,8 +99,16 @@ class ClassMembershipNotificationIntegrationTest {
                         + "Semester 2, Academic Year 2026 has been submitted and is awaiting Class Rep approval.");
         assertThat(deliveriesFor(notification))
                 .extracting(NotificationDelivery::getChannel)
-                .containsExactlyInAnyOrder(NotificationChannel.IN_APP, NotificationChannel.EMAIL, NotificationChannel.WHATSAPP);
-        assertThat(deliveriesFor(notification)).allMatch(d -> d.getStatus() == DeliveryStatus.PENDING);
+                .containsExactlyInAnyOrder(
+                        NotificationChannel.IN_APP,
+                        NotificationChannel.EMAIL,
+                        NotificationChannel.WHATSAPP,
+                        NotificationChannel.PUSH);
+        assertThat(deliveriesFor(notification).stream()
+                        .filter(d -> d.getChannel() != NotificationChannel.PUSH))
+                .allMatch(d -> d.getStatus() == DeliveryStatus.PENDING);
+        assertThat(deliveryFor(notification, NotificationChannel.PUSH).getStatus())
+                .isEqualTo(DeliveryStatus.SKIPPED);
     }
 
     @Test
@@ -116,12 +124,12 @@ class ClassMembershipNotificationIntegrationTest {
         assertThat(approved.getMessage()).isEqualTo(
                 "Welcome to ClassHub. You have been approved to join "
                         + "Bachelor of Science in Information Technology — Year 3, Semester 2, Academic Year 2026.");
-        assertThat(deliveriesFor(approved)).hasSize(3);
+        assertThat(deliveriesFor(approved)).hasSize(4);
 
         assertThatThrownBy(() -> classRepMembershipService.approve(classRep.getId(), pending.membershipId()))
                 .isInstanceOf(ApplicationException.class);
         assertThat(notificationsFor(pending.membershipId(), NotificationType.CLASS_JOIN_APPROVED)).hasSize(1);
-        assertThat(deliveriesFor(approved)).hasSize(3);
+        assertThat(deliveriesFor(approved)).hasSize(4);
     }
 
     @Test
@@ -153,7 +161,11 @@ class ClassMembershipNotificationIntegrationTest {
                 .contains("was not approved", "Bachelor of Science in Information Technology", "Year 3",
                         "Semester 2", "Academic Year 2026")
                 .doesNotContain("You joined the class", "null");
-        assertThat(deliveriesFor(rejected)).allMatch(delivery -> delivery.getStatus() == DeliveryStatus.PENDING);
+        assertThat(deliveriesFor(rejected).stream()
+                        .filter(delivery -> delivery.getChannel() != NotificationChannel.PUSH))
+                .allMatch(delivery -> delivery.getStatus() == DeliveryStatus.PENDING);
+        assertThat(deliveryFor(rejected, NotificationChannel.PUSH).getStatus())
+                .isEqualTo(DeliveryStatus.SKIPPED);
 
         User activeStudent = createUser("Lifecycle", "Student", uniqueEmail("lifecycle"), "+256700000004");
         ClassMembershipResponse activePending = membershipService.joinExistingUser(

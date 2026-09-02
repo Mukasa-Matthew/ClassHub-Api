@@ -4,6 +4,7 @@ import com.classhub.coursework.CourseworkProgress;
 import com.classhub.coursework.CourseworkProgressRepository;
 import com.classhub.coursework.CourseworkProgressStatus;
 import com.classhub.notification.config.NotificationProperties;
+import com.classhub.notification.push.PushSubscriptionRepository;
 import com.classhub.user.User;
 import com.classhub.user.UserRole;
 import com.classhub.user.UserStatus;
@@ -17,18 +18,22 @@ public class NotificationEligibilityService {
     public static final String SKIP_PREFERENCE_DISABLED = "PREFERENCE_DISABLED";
     public static final String SKIP_NO_CONTACT = "NO_CONTACT";
     public static final String SKIP_NOT_STUDENT = "NOT_STUDENT";
+    public static final String SKIP_NO_SUBSCRIPTION = "NO_SUBSCRIPTION";
 
     private final NotificationProperties properties;
     private final NotificationPreferenceRepository preferenceRepository;
     private final CourseworkProgressRepository progressRepository;
+    private final PushSubscriptionRepository pushSubscriptionRepository;
 
     public NotificationEligibilityService(
             NotificationProperties properties,
             NotificationPreferenceRepository preferenceRepository,
-            CourseworkProgressRepository progressRepository) {
+            CourseworkProgressRepository progressRepository,
+            PushSubscriptionRepository pushSubscriptionRepository) {
         this.properties = properties;
         this.preferenceRepository = preferenceRepository;
         this.progressRepository = progressRepository;
+        this.pushSubscriptionRepository = pushSubscriptionRepository;
     }
 
     public boolean isChannelEligible(User user, NotificationChannel channel) {
@@ -74,6 +79,18 @@ public class NotificationEligibilityService {
             }
             if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) {
                 return SKIP_NO_CONTACT;
+            }
+            return null;
+        }
+        if (channel == NotificationChannel.PUSH) {
+            if (!properties.getPush().isEnabled()) {
+                return SKIP_PROVIDER_DISABLED;
+            }
+            if (respectsPreferences(eventType) && !prefs.isPushEnabled()) {
+                return SKIP_PREFERENCE_DISABLED;
+            }
+            if (!pushSubscriptionRepository.existsByUserId(user.getId())) {
+                return SKIP_NO_SUBSCRIPTION;
             }
             return null;
         }

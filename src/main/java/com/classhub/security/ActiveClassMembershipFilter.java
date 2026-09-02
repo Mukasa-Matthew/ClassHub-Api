@@ -75,6 +75,9 @@ public class ActiveClassMembershipFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/v1/auth/")) {
             return true;
         }
+        if (path.startsWith("/api/v1/me/push-subscriptions")) {
+            return true;
+        }
         if (ALLOWED_WITHOUT_ACTIVE_MEMBERSHIP.contains(path)) {
             return true;
         }

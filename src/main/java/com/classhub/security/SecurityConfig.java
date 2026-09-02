@@ -97,7 +97,12 @@ public class SecurityConfig {
                         .expiredSessionStrategy(event ->
                                 event.getResponse().sendError(HttpServletResponse.SC_UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/health", "/ready", "/api/v1/auth/csrf")
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/health",
+                                "/ready",
+                                "/api/v1/auth/csrf",
+                                "/api/v1/public/push-config")
                         .permitAll()
                         .requestMatchers(
                                 HttpMethod.POST,
@@ -167,6 +172,8 @@ public class SecurityConfig {
                         .hasAnyRole("STUDENT", "CLASS_REP")
                         .requestMatchers("/api/v1/me/notification-preferences", "/api/v1/me/notification-preferences/**")
                         .hasAnyRole("STUDENT", "CLASS_REP")
+                        .requestMatchers("/api/v1/me/push-subscriptions", "/api/v1/me/push-subscriptions/**")
+                        .authenticated()
                         .requestMatchers("/api/v1/notes", "/api/v1/notes/**")
                         .hasAnyRole("STUDENT", "CLASS_REP")
                         .anyRequest().authenticated())

@@ -33,6 +33,9 @@ public class NotificationPreference {
     @Column(name = "whatsapp_enabled", nullable = false)
     private boolean whatsappEnabled;
 
+    @Column(name = "push_enabled", nullable = false)
+    private boolean pushEnabled;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -46,6 +49,7 @@ public class NotificationPreference {
         this.user = user;
         this.emailEnabled = emailEnabled;
         this.whatsappEnabled = whatsappEnabled;
+        this.pushEnabled = false;
     }
 
     @PrePersist
@@ -76,8 +80,18 @@ public class NotificationPreference {
         return whatsappEnabled;
     }
 
+    public boolean isPushEnabled() {
+        return pushEnabled;
+    }
+
     public void update(boolean emailEnabled, boolean whatsappEnabled) {
         this.emailEnabled = emailEnabled;
         this.whatsappEnabled = whatsappEnabled;
+    }
+
+    public void update(boolean emailEnabled, boolean whatsappEnabled, boolean pushEnabled) {
+        this.emailEnabled = emailEnabled;
+        this.whatsappEnabled = whatsappEnabled;
+        this.pushEnabled = pushEnabled;
     }
 }

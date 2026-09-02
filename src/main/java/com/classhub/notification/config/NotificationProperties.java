@@ -11,6 +11,7 @@ public class NotificationProperties {
     private boolean enabled = true;
     private Email email = new Email();
     private WhatsApp whatsapp = new WhatsApp();
+    private Push push = new Push();
     private Reminders reminders = new Reminders();
     private Delivery delivery = new Delivery();
     private String timezone = "Africa/Kampala";
@@ -38,6 +39,14 @@ public class NotificationProperties {
 
     public void setWhatsapp(WhatsApp whatsapp) {
         this.whatsapp = whatsapp;
+    }
+
+    public Push getPush() {
+        return push;
+    }
+
+    public void setPush(Push push) {
+        this.push = push;
     }
 
     public Reminders getReminders() {
@@ -127,6 +136,29 @@ public class NotificationProperties {
         public void setApiKey(String apiKey) { this.apiKey = apiKey; }
         public String getDeviceId() { return deviceId; }
         public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+    }
+
+    public static class Push {
+        private boolean enabled = false;
+        private String vapidPublicKey;
+        private String vapidPrivateKey;
+        private String subject;
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getVapidPublicKey() { return vapidPublicKey; }
+        public void setVapidPublicKey(String vapidPublicKey) { this.vapidPublicKey = vapidPublicKey; }
+        public String getVapidPrivateKey() { return vapidPrivateKey; }
+        public void setVapidPrivateKey(String vapidPrivateKey) { this.vapidPrivateKey = vapidPrivateKey; }
+        public String getSubject() { return subject; }
+        public void setSubject(String subject) { this.subject = subject; }
+        public boolean isConfigured() {
+            return !isBlank(vapidPublicKey) && !isBlank(vapidPrivateKey) && !isBlank(subject);
+        }
+
+        private static boolean isBlank(String value) {
+            return value == null || value.isBlank();
+        }
     }
 
     public static class Reminders {

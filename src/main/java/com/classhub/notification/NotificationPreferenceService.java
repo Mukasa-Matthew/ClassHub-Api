@@ -35,7 +35,10 @@ public class NotificationPreferenceService {
     public NotificationPreferenceResponse updateOwn(UpdateNotificationPreferenceRequest request) {
         User student = requireStudent();
         NotificationPreference preference = resolvePreference(student);
-        preference.update(request.emailEnabled(), request.whatsappEnabled());
+        preference.update(
+                request.emailEnabled(),
+                request.whatsappEnabled(),
+                request.pushEnabled() == null ? preference.isPushEnabled() : request.pushEnabled());
         return NotificationPreferenceResponse.from(preferenceRepository.saveAndFlush(preference));
     }
 
