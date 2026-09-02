@@ -429,6 +429,7 @@ class ClassMembershipHardeningIntegrationTest {
 
         mockMvc.perform(get("/api/v1/class-rep/members").session(repASession))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.email=='hard.student.a@example.com')].membershipId").isNotEmpty())
                 .andExpect(jsonPath("$.data[?(@.email=='hard.student.b@example.com')]").doesNotExist());
         for (String action : new String[] {"approve", "reject"}) {
             mockMvc.perform(post("/api/v1/class-rep/members/{id}/" + action, pendingB.getId())

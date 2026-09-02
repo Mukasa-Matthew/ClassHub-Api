@@ -231,6 +231,7 @@ public class ClassRepMembershipService {
     private ClassMemberDirectoryResponse toDirectoryResponse(ClassMembership membership) {
         User user = membership.getUser();
         return new ClassMemberDirectoryResponse(
+                membership.getId(),
                 user.getId(),
                 fullName(user),
                 user.getRegistrationNumber(),
