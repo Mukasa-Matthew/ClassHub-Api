@@ -44,6 +44,26 @@ public class AuthController {
         return ApiResponse.of(authService.login(request, httpRequest, httpResponse));
     }
 
+    @PostMapping("/forgot-password")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public ApiResponse<PasswordRecoveryResponse> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request,
+            HttpServletRequest httpRequest) {
+        return ApiResponse.of(authService.forgotPassword(request, clientKey(httpRequest)));
+    }
+
+    @PostMapping("/forgot-password/verify")
+    public ApiResponse<PasswordResetAuthorizationResponse> verifyPasswordResetOtp(
+            @Valid @RequestBody VerifyPasswordResetOtpRequest request) {
+        return ApiResponse.of(authService.verifyPasswordResetOtp(request));
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+    }
+
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(HttpServletRequest request) {
@@ -53,5 +73,13 @@ public class AuthController {
     @GetMapping("/me")
     public ApiResponse<AuthenticatedUserResponse> me() {
         return ApiResponse.of(authService.currentUser());
+    }
+
+    private static String clientKey(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() == null ? "unknown" : request.getRemoteAddr();
     }
 }

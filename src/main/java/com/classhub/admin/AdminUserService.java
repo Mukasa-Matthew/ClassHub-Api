@@ -147,6 +147,12 @@ public class AdminUserService {
     @Transactional
     public UserResponse updateStatus(UUID id, UpdateUserStatusRequest request) {
         UserStatus newStatus = request.status();
+        if (newStatus == UserStatus.PENDING_SETUP) {
+            throw new ApplicationException(
+                    ErrorCodes.INVALID_STATUS_CHANGE,
+                    "PENDING_SETUP is managed by the Class Rep onboarding flow",
+                    HttpStatus.BAD_REQUEST);
+        }
         User target = userService.getById(id);
         UUID actorId = currentAdminId();
 

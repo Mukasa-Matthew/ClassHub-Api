@@ -1,5 +1,7 @@
 package com.classhub.notification;
 
+import com.classhub.academicclass.AcademicClass;
+import com.classhub.academicclass.ClassMembership;
 import com.classhub.announcement.Announcement;
 import com.classhub.courseunit.CourseUnit;
 import com.classhub.coursework.Coursework;
@@ -21,6 +23,7 @@ public class NotificationTemplateService {
 
     public static final String REFERENCE_COURSEWORK = "COURSEWORK";
     public static final String REFERENCE_ANNOUNCEMENT = "ANNOUNCEMENT";
+    public static final String REFERENCE_CLASS_MEMBERSHIP = "CLASS_MEMBERSHIP";
 
     private static final int INSTRUCTION_PREVIEW = 200;
     private static final int ANNOUNCEMENT_PREVIEW = 280;
@@ -74,6 +77,107 @@ public class NotificationTemplateService {
                 null,
                 null,
                 Map.of("classContext", "ClassHub"));
+    }
+
+    public NotificationMessage classJoinRequested(ClassMembership membership) {
+        String classLabel = academicClassLabel(membership.getAcademicClass());
+        String text = "Your request to join " + classLabel
+                + " has been submitted and is awaiting Class Rep approval.";
+        return new NotificationMessage(
+                NotificationType.CLASS_JOIN_REQUESTED,
+                "Class join request submitted",
+                text,
+                text,
+                "View class request",
+                "/",
+                null,
+                null,
+                null,
+                null,
+                Map.of("classContext", classLabel));
+    }
+
+    public NotificationMessage classJoinApproved(ClassMembership membership) {
+        String classLabel = academicClassLabel(membership.getAcademicClass());
+        String text = "Welcome to ClassHub. You have been approved to join " + classLabel + ".";
+        return new NotificationMessage(
+                NotificationType.CLASS_JOIN_APPROVED,
+                "Class join request approved",
+                text,
+                text,
+                "Open ClassHub",
+                "/",
+                null,
+                null,
+                null,
+                null,
+                Map.of("classContext", classLabel));
+    }
+
+    public NotificationMessage classJoinRejected(ClassMembership membership) {
+        String classLabel = academicClassLabel(membership.getAcademicClass());
+        String text = "Your request to join " + classLabel
+                + " was not approved. Contact your Class Rep if you believe this is a mistake.";
+        return classMembershipMessage(
+                NotificationType.CLASS_JOIN_REJECTED,
+                "Class join request not approved",
+                text,
+                classLabel);
+    }
+
+    public NotificationMessage classMemberDeactivated(ClassMembership membership) {
+        String classLabel = academicClassLabel(membership.getAcademicClass());
+        String text = "Your ClassHub membership for " + classLabel
+                + " has been deactivated. Contact your Class Rep if you need help.";
+        return classMembershipMessage(
+                NotificationType.CLASS_MEMBER_DEACTIVATED,
+                "Class membership deactivated",
+                text,
+                classLabel);
+    }
+
+    public NotificationMessage classMemberReactivated(ClassMembership membership) {
+        String classLabel = academicClassLabel(membership.getAcademicClass());
+        String text = "Your ClassHub membership for " + classLabel
+                + " has been reactivated. You can access the class again.";
+        return classMembershipMessage(
+                NotificationType.CLASS_MEMBER_REACTIVATED,
+                "Class membership reactivated",
+                text,
+                classLabel);
+    }
+
+    public NotificationMessage accountSetupCompleted(AcademicClass academicClass) {
+        String classLabel = academicClassLabel(academicClass);
+        String text = "Your ClassHub account setup is complete. Your class is ready: " + classLabel + ".";
+        return new NotificationMessage(
+                NotificationType.ACCOUNT_SETUP_COMPLETED,
+                "Welcome to ClassHub",
+                text,
+                text,
+                "Open ClassHub",
+                "/",
+                null,
+                null,
+                null,
+                null,
+                Map.of("classContext", classLabel));
+    }
+
+    private NotificationMessage classMembershipMessage(
+            NotificationType type, String title, String text, String classLabel) {
+        return new NotificationMessage(
+                type,
+                title,
+                text,
+                text,
+                "Open ClassHub",
+                "/",
+                null,
+                null,
+                null,
+                null,
+                Map.of("classContext", classLabel));
     }
 
     public NotificationMessage courseworkDeadlineReminder(
@@ -250,6 +354,13 @@ public class NotificationTemplateService {
 
     public static String occurrenceKeyDefault() {
         return "default";
+    }
+
+    private static String academicClassLabel(AcademicClass academicClass) {
+        return academicClass.getProgrammeName()
+                + " — Year " + academicClass.getStudyYear()
+                + ", Semester " + academicClass.getSemester()
+                + ", Academic Year " + academicClass.getAcademicYear();
     }
 
     public ZoneId zoneId() {

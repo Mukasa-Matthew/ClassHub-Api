@@ -1,9 +1,11 @@
 package com.classhub.academicclass;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,6 +40,7 @@ public interface ClassMembershipRepository extends JpaRepository<ClassMembership
             join fetch m.user
             where m.id = :id
             """)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<ClassMembership> findDetailedById(@Param("id") UUID id);
 
     @Query("""

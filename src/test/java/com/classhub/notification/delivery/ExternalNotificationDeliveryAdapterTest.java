@@ -42,7 +42,8 @@ class ExternalNotificationDeliveryAdapterTest {
                         "https://app.classhub.test/coursework/123")))
                 .andRespond(withSuccess("{\"messageId\":\"brevo-message-1\"}", MediaType.APPLICATION_JSON));
 
-        DeliveryResult result = new BrevoEmailNotificationDeliveryAdapter(properties, builder).send(request());
+        DeliveryResult result = new BrevoEmailNotificationDeliveryAdapter(
+                properties, builder, new NotificationChannelTemplateService(properties)).send(request());
 
         assertThat(result.success()).isTrue();
         assertThat(result.providerMessageId()).isEqualTo("brevo-message-1");
@@ -72,7 +73,8 @@ class ExternalNotificationDeliveryAdapterTest {
                         .body("{\"message_id\":\"sopra-message-1\"}"));
 
         WhatsAppProvider provider = new SopraSendWhatsAppProvider(properties, builder);
-        DeliveryResult result = new SopraSendWhatsAppNotificationDeliveryAdapter(properties, provider)
+        DeliveryResult result = new SopraSendWhatsAppNotificationDeliveryAdapter(
+                        properties, provider, new NotificationChannelTemplateService(properties))
                 .send(request());
 
         assertThat(result.success()).isTrue();
@@ -84,10 +86,12 @@ class ExternalNotificationDeliveryAdapterTest {
     void disabledProvidersSkipWithoutCallingExternalApis() {
         NotificationProperties properties = properties();
 
-        DeliveryResult email = new BrevoEmailNotificationDeliveryAdapter(properties, RestClient.builder())
+        DeliveryResult email = new BrevoEmailNotificationDeliveryAdapter(
+                        properties, RestClient.builder(), new NotificationChannelTemplateService(properties))
                 .send(request());
         WhatsAppProvider provider = new SopraSendWhatsAppProvider(properties, RestClient.builder());
-        DeliveryResult whatsapp = new SopraSendWhatsAppNotificationDeliveryAdapter(properties, provider)
+        DeliveryResult whatsapp = new SopraSendWhatsAppNotificationDeliveryAdapter(
+                        properties, provider, new NotificationChannelTemplateService(properties))
                 .send(request());
 
         assertThat(email.skipped()).isTrue();

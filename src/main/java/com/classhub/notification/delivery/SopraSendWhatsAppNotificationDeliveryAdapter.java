@@ -9,11 +9,15 @@ public class SopraSendWhatsAppNotificationDeliveryAdapter implements Notificatio
 
     private final NotificationProperties properties;
     private final WhatsAppProvider provider;
+    private final NotificationChannelTemplateService templateService;
 
     public SopraSendWhatsAppNotificationDeliveryAdapter(
-            NotificationProperties properties, WhatsAppProvider provider) {
+            NotificationProperties properties,
+            WhatsAppProvider provider,
+            NotificationChannelTemplateService templateService) {
         this.properties = properties;
         this.provider = provider;
+        this.templateService = templateService;
     }
 
     @Override
@@ -31,20 +35,6 @@ public class SopraSendWhatsAppNotificationDeliveryAdapter implements Notificatio
             return DeliveryResult.skipped("INVALID_PHONE", "Recipient phone number is invalid");
         }
         return provider.send(new WhatsAppSendCommand(
-                request.deliveryId(), destination, messageText(request)));
-    }
-
-    private String messageText(NotificationDeliveryRequest request) {
-        NotificationMessage message = request.message();
-        String base = properties.getWebBaseUrl().replaceAll("/+$", "");
-        String path = message.actionPath() == null || message.actionPath().isBlank()
-                ? "/"
-                : message.actionPath();
-        String url = base + (path.startsWith("/") ? path : "/" + path);
-        String summary = message.shortText() == null || message.shortText().isBlank()
-                ? message.body()
-                : message.shortText();
-        return "%s\n\n%s\n\nOpen ClassHub for details: %s"
-                .formatted(message.title(), summary, url);
+                request.deliveryId(), destination, templateService.whatsapp(request)));
     }
 }

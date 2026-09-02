@@ -23,11 +23,20 @@ public class AcademicClass {
     @Column(name = "name", nullable = false, length = 200)
     private String name;
 
-    @Column(name = "programme_name", length = 200)
+    @Column(name = "programme_name", nullable = false, length = 200)
     private String programmeName;
 
     @Column(name = "programme_code", length = 50)
     private String programmeCode;
+
+    @Column(name = "study_year", nullable = false)
+    private int studyYear;
+
+    @Column(name = "semester", nullable = false)
+    private int semester;
+
+    @Column(name = "academic_year", nullable = false)
+    private int academicYear;
 
     @Column(name = "join_code", nullable = false, length = 16)
     private String joinCode;
@@ -58,11 +67,17 @@ public class AcademicClass {
             String name,
             String programmeName,
             String programmeCode,
+            int studyYear,
+            int semester,
+            int academicYear,
             String joinCode,
             AcademicClassStatus status) {
         this.name = name;
         this.programmeName = programmeName;
         this.programmeCode = programmeCode;
+        this.studyYear = studyYear;
+        this.semester = semester;
+        this.academicYear = academicYear;
         this.joinCode = joinCode;
         this.status = status;
     }
@@ -96,6 +111,18 @@ public class AcademicClass {
 
     public String getProgrammeCode() {
         return programmeCode;
+    }
+
+    public int getStudyYear() {
+        return studyYear;
+    }
+
+    public int getSemester() {
+        return semester;
+    }
+
+    public int getAcademicYear() {
+        return academicYear;
     }
 
     public String getJoinCode() {
@@ -134,10 +161,16 @@ public class AcademicClass {
             String name,
             String programmeName,
             String programmeCode,
+            int studyYear,
+            int semester,
+            int academicYear,
             AcademicClassStatus status) {
         this.name = name;
         this.programmeName = programmeName;
         this.programmeCode = programmeCode;
+        this.studyYear = studyYear;
+        this.semester = semester;
+        this.academicYear = academicYear;
         this.status = status;
     }
 

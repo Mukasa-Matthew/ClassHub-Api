@@ -7,6 +7,9 @@ public record AcademicClassResponse(
         String name,
         String programmeName,
         String programmeCode,
+        int studyYear,
+        int semester,
+        int academicYear,
         AcademicClassStatus status,
         String joinCode) {
 
@@ -16,6 +19,9 @@ public record AcademicClassResponse(
                 academicClass.getName(),
                 academicClass.getProgrammeName(),
                 academicClass.getProgrammeCode(),
+                academicClass.getStudyYear(),
+                academicClass.getSemester(),
+                academicClass.getAcademicYear(),
                 academicClass.getStatus(),
                 includeJoinCode ? academicClass.getJoinCode() : null);
     }
