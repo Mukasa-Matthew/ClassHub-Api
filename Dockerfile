@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:24-jdk AS build
 WORKDIR /workspace
 
 COPY mvnw pom.xml ./
@@ -9,7 +9,7 @@ COPY src src
 RUN ./mvnw -q -B -DskipTests package \
     && rm -rf /root/.m2/repository
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:24-jre
 WORKDIR /app
 
 RUN apt-get update \
