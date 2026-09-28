@@ -17,6 +17,7 @@ import com.classhub.user.UserRepository;
 import com.classhub.user.UserRole;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.List;
@@ -56,6 +57,7 @@ public class CourseworkService {
     private final CourseworkAttachmentService attachmentService;
     private final AuditService auditService;
     private final ClassMembershipAccessService membershipAccessService;
+    private final Clock clock;
 
     public CourseworkService(
             CourseworkRepository courseworkRepository,
@@ -66,7 +68,8 @@ public class CourseworkService {
             NotificationOrchestrator notificationOrchestrator,
             CourseworkAttachmentService attachmentService,
             AuditService auditService,
-            ClassMembershipAccessService membershipAccessService) {
+            ClassMembershipAccessService membershipAccessService,
+            Clock clock) {
         this.courseworkRepository = courseworkRepository;
         this.courseUnitRepository = courseUnitRepository;
         this.userRepository = userRepository;
@@ -76,6 +79,7 @@ public class CourseworkService {
         this.attachmentService = attachmentService;
         this.auditService = auditService;
         this.membershipAccessService = membershipAccessService;
+        this.clock = clock;
     }
 
     @Transactional
@@ -284,7 +288,7 @@ public class CourseworkService {
             throw invalidState("Only DRAFT coursework can be published");
         }
         validatePublishable(coursework);
-        coursework.publish(Instant.now());
+        coursework.publish(Instant.now(clock));
         Coursework saved = courseworkRepository.saveAndFlush(coursework);
         notificationService.notifyCourseworkPublished(saved);
         auditService.record(
@@ -373,7 +377,7 @@ public class CourseworkService {
                     HttpStatus.BAD_REQUEST);
         }
 
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         CourseworkStatus effectiveStatus = status;
         boolean filterDueAfter = false;
         boolean filterDueBefore = false;
@@ -525,14 +529,14 @@ public class CourseworkService {
                         HttpStatus.UNAUTHORIZED));
     }
 
-    private static Instant requireDueAt(Instant dueAt, boolean mustBeFuture) {
+    private Instant requireDueAt(Instant dueAt, boolean mustBeFuture) {
         if (dueAt == null) {
             throw new ApplicationException(
                     ErrorCodes.INVALID_COURSEWORK_DEADLINE,
                     "dueAt is required",
                     HttpStatus.BAD_REQUEST);
         }
-        if (mustBeFuture && !dueAt.isAfter(Instant.now())) {
+        if (mustBeFuture && !dueAt.isAfter(Instant.now(clock))) {
             throw new ApplicationException(
                     ErrorCodes.INVALID_COURSEWORK_DEADLINE,
                     "dueAt must be in the future",
