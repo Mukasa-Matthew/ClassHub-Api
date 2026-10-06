@@ -78,3 +78,6 @@ Activate the production profile with `SPRING_PROFILES_ACTIVE=prod` and serve the
 HTTPS. The profile enables secure session cookies, hides error details, and reduces logging.
 Configure `CLASSHUB_CORS_ALLOWED_ORIGINS` with the exact frontend origins; wildcard origins are
 rejected. Secrets must be supplied through environment variables, never committed.
+
+
+new commit
