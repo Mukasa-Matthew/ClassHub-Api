@@ -35,7 +35,15 @@ public class NotificationEligibilityService {
         return eligibilityReason(user, channel) == null;
     }
 
+    public boolean isChannelEligible(User user, NotificationChannel channel, NotificationType eventType) {
+        return eligibilityReason(user, channel, eventType) == null;
+    }
+
     public String eligibilityReason(User user, NotificationChannel channel) {
+        return eligibilityReason(user, channel, null);
+    }
+
+    public String eligibilityReason(User user, NotificationChannel channel, NotificationType eventType) {
         if (!user.getRole().isStudentLike() || user.getStatus() != UserStatus.ACTIVE) {
             return SKIP_NOT_STUDENT;
         }
@@ -49,7 +57,7 @@ public class NotificationEligibilityService {
             if (!properties.getEmail().isEnabled()) {
                 return SKIP_PROVIDER_DISABLED;
             }
-            if (!prefs.isEmailEnabled()) {
+            if (respectsPreferences(eventType) && !prefs.isEmailEnabled()) {
                 return SKIP_PREFERENCE_DISABLED;
             }
             if (user.getEmail() == null || user.getEmail().isBlank()) {
@@ -61,7 +69,7 @@ public class NotificationEligibilityService {
             if (!properties.getWhatsapp().isEnabled()) {
                 return SKIP_PROVIDER_DISABLED;
             }
-            if (!prefs.isWhatsappEnabled()) {
+            if (respectsPreferences(eventType) && !prefs.isWhatsappEnabled()) {
                 return SKIP_PREFERENCE_DISABLED;
             }
             if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) {
@@ -70,6 +78,10 @@ public class NotificationEligibilityService {
             return null;
         }
         return SKIP_PROVIDER_DISABLED;
+    }
+
+    private static boolean respectsPreferences(NotificationType eventType) {
+        return eventType == null || eventType.respectsAcademicChannelPreferences();
     }
 
     public boolean isReminderEligible(User student, UUID courseworkId) {

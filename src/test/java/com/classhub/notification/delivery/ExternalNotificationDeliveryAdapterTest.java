@@ -42,7 +42,8 @@ class ExternalNotificationDeliveryAdapterTest {
                         "https://app.classhub.test/coursework/123")))
                 .andRespond(withSuccess("{\"messageId\":\"brevo-message-1\"}", MediaType.APPLICATION_JSON));
 
-        DeliveryResult result = new BrevoEmailNotificationDeliveryAdapter(properties, builder).send(request());
+        DeliveryResult result = new BrevoEmailNotificationDeliveryAdapter(
+                properties, builder, new NotificationChannelTemplateService(properties)).send(request());
 
         assertThat(result.success()).isTrue();
         assertThat(result.providerMessageId()).isEqualTo("brevo-message-1");
@@ -50,35 +51,34 @@ class ExternalNotificationDeliveryAdapterTest {
     }
 
     @Test
-    void metaSendsApprovedTemplateWithNormalizedPhoneAndVariables() {
+    void sopraSendQueuesConciseMessageWithNormalizedPhone() {
         NotificationProperties properties = properties();
         properties.getWhatsapp().setEnabled(true);
-        properties.getWhatsapp().setGraphApiBaseUrl("https://graph.test");
-        properties.getWhatsapp().setGraphApiVersion("v24.0");
-        properties.getWhatsapp().setAccessToken("test-meta-token");
-        properties.getWhatsapp().setPhoneNumberId("123456789");
-        properties.getWhatsapp().setTemplateName("classhub_notification");
-        properties.getWhatsapp().setTemplateLanguage("en");
+        properties.getWhatsapp().setBaseUrl("https://soprasend.test");
+        properties.getWhatsapp().setApiKey("test-soprasend-key");
+        properties.getWhatsapp().setDeviceId("device-123");
 
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        server.expect(requestTo("https://graph.test/v24.0/123456789/messages"))
+        server.expect(requestTo("https://soprasend.test/api/v1/messages/send"))
                 .andExpect(method(HttpMethod.POST))
-                .andExpect(header("Authorization", "Bearer test-meta-token"))
-                .andExpect(jsonPath("$.messaging_product").value("whatsapp"))
+                .andExpect(header("Authorization", "Bearer test-soprasend-key"))
+                .andExpect(jsonPath("$.device_id").value("device-123"))
                 .andExpect(jsonPath("$.to").value("256700123456"))
-                .andExpect(jsonPath("$.template.name").value("classhub_notification"))
-                .andExpect(jsonPath("$.template.components[0].parameters[0].text").value("Matthew"))
-                .andExpect(jsonPath("$.template.components[0].parameters[3].text")
-                        .value("https://app.classhub.test/coursework/123"))
-                .andRespond(withSuccess(
-                        "{\"messages\":[{\"id\":\"wamid.test-message-1\"}]}",
-                        MediaType.APPLICATION_JSON));
+                .andExpect(jsonPath("$.text").value(org.hamcrest.Matchers.containsString(
+                        "https://app.classhub.test/coursework/123")))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators
+                        .withStatus(org.springframework.http.HttpStatus.ACCEPTED)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"message_id\":\"sopra-message-1\"}"));
 
-        DeliveryResult result = new MetaWhatsAppNotificationDeliveryAdapter(properties, builder).send(request());
+        WhatsAppProvider provider = new SopraSendWhatsAppProvider(properties, builder);
+        DeliveryResult result = new SopraSendWhatsAppNotificationDeliveryAdapter(
+                        properties, provider, new NotificationChannelTemplateService(properties))
+                .send(request());
 
         assertThat(result.success()).isTrue();
-        assertThat(result.providerMessageId()).isEqualTo("wamid.test-message-1");
+        assertThat(result.providerMessageId()).isEqualTo("sopra-message-1");
         server.verify();
     }
 
@@ -86,9 +86,12 @@ class ExternalNotificationDeliveryAdapterTest {
     void disabledProvidersSkipWithoutCallingExternalApis() {
         NotificationProperties properties = properties();
 
-        DeliveryResult email = new BrevoEmailNotificationDeliveryAdapter(properties, RestClient.builder())
+        DeliveryResult email = new BrevoEmailNotificationDeliveryAdapter(
+                        properties, RestClient.builder(), new NotificationChannelTemplateService(properties))
                 .send(request());
-        DeliveryResult whatsapp = new MetaWhatsAppNotificationDeliveryAdapter(properties, RestClient.builder())
+        WhatsAppProvider provider = new SopraSendWhatsAppProvider(properties, RestClient.builder());
+        DeliveryResult whatsapp = new SopraSendWhatsAppNotificationDeliveryAdapter(
+                        properties, provider, new NotificationChannelTemplateService(properties))
                 .send(request());
 
         assertThat(email.skipped()).isTrue();
@@ -97,10 +100,11 @@ class ExternalNotificationDeliveryAdapterTest {
 
     @Test
     void whatsappPhoneNormalizationUsesInternationalDigitsOnly() {
-        assertThat(MetaWhatsAppNotificationDeliveryAdapter.normalizePhone("+256 700-123-456"))
+        assertThat(WhatsAppPhoneNormalizer.toProviderNumber("+256 700-123-456"))
                 .isEqualTo("256700123456");
-        assertThat(MetaWhatsAppNotificationDeliveryAdapter.normalizePhone("123"))
-                .isNull();
+        assertThat(WhatsAppPhoneNormalizer.toProviderNumber("0700123456")).isEqualTo("256700123456");
+        assertThat(WhatsAppPhoneNormalizer.toProviderNumber("700123456")).isEqualTo("256700123456");
+        assertThat(WhatsAppPhoneNormalizer.toProviderNumber("123")).isNull();
     }
 
     private static NotificationProperties properties() {

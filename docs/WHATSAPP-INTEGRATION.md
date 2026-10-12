@@ -15,13 +15,14 @@ The notification foundation is provider-aware at the delivery edge and provider-
 - `NotificationEligibilityService` applies role/status, provider-enabled, preference, and contact-presence checks before external delivery.
 - `notification_preferences.whatsapp_enabled` defaults to `false`; missing preference rows resolve to WhatsApp disabled.
 - `NotificationDeliveryWorker` processes pending outbox rows in bounded batches through `NotificationDeliveryAdapter` implementations.
-- `MetaWhatsAppNotificationDeliveryAdapter` is the current concrete WHATSAPP adapter. It can make Meta Graph API requests when enabled and configured, but `CLASSHUB_WHATSAPP_NOTIFICATIONS_ENABLED` defaults to `false`.
+- `SopraSendWhatsAppNotificationDeliveryAdapter` is the WHATSAPP channel adapter and delegates to the provider-neutral `WhatsAppProvider` port.
+- `SopraSendWhatsAppProvider` implements the verified outbound text-message contract and `SOPRASEND_ENABLED` defaults to `false`.
 - The current database status model is `PENDING`, `PROCESSING`, `SENT`, `FAILED`, or `SKIPPED`. It does not yet model provider acceptance separately from handset delivery/read states.
 - Delivery rows can store `provider_message_id`, safe error code/message, attempt count, and retry timestamps.
 - There is no WhatsApp webhook endpoint or generic provider-webhook foundation.
 - Coursework and announcement mutations are audited by their domain services. Notification delivery attempts are not written to the administrative audit log. Provider credentials, authorization headers, message bodies, and phone numbers must never be added to audit metadata.
 
-The existing Meta adapter is not a SopraSend contract and must not be repurposed by adding SopraSend-specific conditionals.
+SopraSend request/response types remain inside its provider implementation and do not leak into the notification domain.
 
 ## 3. Existing architecture
 
@@ -112,7 +113,7 @@ SOPRASEND_API_KEY=<secret>
 SOPRASEND_DEVICE_ID=<backend-side-device-id>
 ```
 
-These variables are documentation-only proposals. They must not be added to runtime configuration until the integration phase defines validated configuration properties and activation rules.
+These variables are now the runtime configuration contract. The provider remains disabled until server-side secrets and a controlled opted-in test are ready.
 
 The following are **TO VERIFY AGAINST SOPRASEND API DOCUMENTATION**:
 
@@ -146,7 +147,7 @@ Expected behavior:
 - Invalid base URL or unsupported scheme: reject configuration or disable that provider safely.
 - Provider unavailable at runtime: isolate the failed delivery and preserve IN_APP.
 
-The existing Meta adapter returns `PROVIDER_NOT_CONFIGURED` when enabled with incomplete configuration. For SopraSend, startup validation is preferable when the provider is explicitly enabled because misconfiguration is deterministic and operator-actionable. If project conventions favor runtime fallback, the provider must still remain disabled and emit a sanitized operational error; it must never attempt partial requests. This decision is **TO VERIFY DURING INTEGRATION** against the final provider-selection configuration design.
+The SopraSend provider returns `PROVIDER_NOT_CONFIGURED` without an HTTP request when enabled with an incomplete API key or device ID.
 
 ## 7. Secrets and security policy
 
@@ -171,7 +172,7 @@ Webhook processing must use provider-specific signature/secret verification and 
 
 - `users.phone_number` is `VARCHAR(32)` and nullable.
 - `UserService.normalizePhoneNumber` currently trims surrounding whitespace only; it does not validate or canonicalize country codes.
-- The current Meta adapter removes all non-digits and accepts a result between 8 and 15 digits. That transformation is adapter-local and is not a canonical database guarantee.
+- The SopraSend channel adapter normalizes documented Uganda inputs and removes the leading plus from valid explicit international numbers at the provider boundary.
 - Eligibility currently checks only that the phone field is nonblank.
 
 ### Target strategy
@@ -499,4 +500,3 @@ Do not perform these phases as part of this preparation task.
 6. **Phase F — Controlled real-number smoke test:** use a dedicated opted-in test student and number in a controlled environment.
 7. **Phase G — Webhook delivery-status support:** implement verified signatures, idempotency, provider-ID mapping, and lifecycle updates.
 8. **Phase H — Production monitoring/rate-limit hardening:** add safe metrics, alerting, throughput controls, retention, and operational runbooks.
-

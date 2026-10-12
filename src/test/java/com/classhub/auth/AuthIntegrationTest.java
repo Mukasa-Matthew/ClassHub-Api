@@ -84,6 +84,14 @@ class AuthIntegrationTest {
     }
 
     @Test
+    void csrfBootstrapIsPublicAndReturnsTokenMetadata() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/csrf"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.token").isNotEmpty())
+                .andExpect(jsonPath("$.data.headerName").isNotEmpty());
+    }
+
+    @Test
     void wrongPasswordFailsWithGenericAuthError() throws Exception {
         mockMvc.perform(post("/api/v1/auth/login")
                         .with(csrf())
