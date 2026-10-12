@@ -9,7 +9,10 @@ public record ClassListResponse(AcademicClassSummary classInfo, List<ClassListMe
             UUID id,
             String name,
             String programmeName,
-            String programmeCode) {
+            String programmeCode,
+            int studyYear,
+            int semester,
+            int academicYear) {
     }
 
     public record ClassListMemberResponse(

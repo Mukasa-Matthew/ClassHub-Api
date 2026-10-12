@@ -31,7 +31,7 @@ public class User {
     @Column(name = "phone_number", length = 32)
     private String phoneNumber;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
 
     @Enumerated(EnumType.STRING)
@@ -147,5 +147,15 @@ public class User {
 
     public void changeStatus(UserStatus status) {
         this.status = status;
+    }
+
+    public void completeAccountSetup(String passwordHash) {
+        this.passwordHash = passwordHash;
+        this.status = UserStatus.ACTIVE;
+        this.emailVerified = true;
+    }
+
+    public void changePassword(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

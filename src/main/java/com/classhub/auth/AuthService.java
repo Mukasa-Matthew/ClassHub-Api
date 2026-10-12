@@ -17,6 +17,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,16 +28,22 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final LoginRateLimiter loginRateLimiter;
+    private final PasswordRecoveryService passwordRecoveryService;
+    private final SessionRegistry sessionRegistry;
     private final SecurityContextRepository securityContextRepository =
             new HttpSessionSecurityContextRepository();
 
     public AuthService(
             AuthenticationManager authenticationManager,
             UserService userService,
-            LoginRateLimiter loginRateLimiter) {
+            LoginRateLimiter loginRateLimiter,
+            PasswordRecoveryService passwordRecoveryService,
+            SessionRegistry sessionRegistry) {
         this.authenticationManager = authenticationManager;
         this.userService = userService;
         this.loginRateLimiter = loginRateLimiter;
+        this.passwordRecoveryService = passwordRecoveryService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     public AuthenticatedUserResponse login(
@@ -60,6 +67,10 @@ public class AuthService {
             context.setAuthentication(authentication);
             SecurityContextHolder.setContext(context);
             securityContextRepository.saveContext(context, httpRequest, httpResponse);
+            HttpSession session = httpRequest.getSession(false);
+            if (session != null) {
+                sessionRegistry.registerNewSession(session.getId(), authentication.getPrincipal());
+            }
 
             ClassHubUserDetails principal = (ClassHubUserDetails) authentication.getPrincipal();
             return toResponse(userService.getById(principal.getId()));
@@ -74,6 +85,19 @@ public class AuthService {
         if (session != null) {
             session.invalidate();
         }
+    }
+
+    public PasswordRecoveryResponse forgotPassword(ForgotPasswordRequest request, String clientKey) {
+        return passwordRecoveryService.forgotPassword(request.identifier(), clientKey);
+    }
+
+    public PasswordResetAuthorizationResponse verifyPasswordResetOtp(
+            VerifyPasswordResetOtpRequest request) {
+        return passwordRecoveryService.verifyOtp(request.identifier(), request.otp());
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        passwordRecoveryService.resetPassword(request.resetToken(), request.newPassword());
     }
 
     public AuthenticatedUserResponse currentUser() {

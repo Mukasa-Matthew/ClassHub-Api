@@ -45,7 +45,7 @@ public class ClassHubUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return passwordHash;
+        return passwordHash == null ? "" : passwordHash;
     }
 
     @Override
