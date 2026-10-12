@@ -44,8 +44,11 @@ public class AcademicClassService {
         String name = requireText(request.name(), "name");
         AcademicClass academicClass = new AcademicClass(
                 name,
-                normalizeOptional(request.programmeName()),
+                requireText(request.programmeName(), "programmeName"),
                 normalizeOptional(request.programmeCode()),
+                request.studyYear(),
+                request.semester(),
+                request.academicYear(),
                 joinCodeGenerator.generateUnique(academicClassRepository),
                 AcademicClassStatus.ACTIVE);
         AcademicClass saved = academicClassRepository.saveAndFlush(academicClass);
@@ -76,12 +79,16 @@ public class AcademicClassService {
         String name = request.name() == null ? academicClass.getName() : requireText(request.name(), "name");
         String programmeName = request.programmeName() == null
                 ? academicClass.getProgrammeName()
-                : normalizeOptional(request.programmeName());
+                : requireText(request.programmeName(), "programmeName");
         String programmeCode = request.programmeCode() == null
                 ? academicClass.getProgrammeCode()
                 : normalizeOptional(request.programmeCode());
         AcademicClassStatus status = request.status() == null ? academicClass.getStatus() : request.status();
-        academicClass.updateDetails(name, programmeName, programmeCode, status);
+        int studyYear = request.studyYear() == null ? academicClass.getStudyYear() : request.studyYear();
+        int semester = request.semester() == null ? academicClass.getSemester() : request.semester();
+        int academicYear = request.academicYear() == null ? academicClass.getAcademicYear() : request.academicYear();
+        academicClass.updateDetails(
+                name, programmeName, programmeCode, studyYear, semester, academicYear, status);
         AcademicClass saved = academicClassRepository.saveAndFlush(academicClass);
         auditService.record(
                 AuditAction.CLASS_UPDATED,

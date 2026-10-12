@@ -6,7 +6,10 @@ target/
 .env
 .env.local
 *.log
+data/
 uploads/
+target/classhub-test-storage/
+
 
 .idea/
 *.iws
