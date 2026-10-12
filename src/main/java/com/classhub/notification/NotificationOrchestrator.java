@@ -1,6 +1,7 @@
 package com.classhub.notification;
 
 import com.classhub.announcement.Announcement;
+import com.classhub.academicclass.ClassMembership;
 import com.classhub.coursework.Coursework;
 import com.classhub.coursework.CourseworkStatus;
 import com.classhub.notification.config.NotificationProperties;
@@ -66,6 +67,70 @@ public class NotificationOrchestrator {
                 announcement.getId(),
                 NotificationTemplateService.REFERENCE_ANNOUNCEMENT,
                 NotificationTemplateService.occurrenceKeyDefault());
+    }
+
+    @Transactional
+    public void onClassJoinRequested(ClassMembership membership) {
+        if (!properties.isEnabled()) {
+            return;
+        }
+        dispatchToStudent(
+                membership.getUser(),
+                templateService.classJoinRequested(membership),
+                membership.getId(),
+                NotificationTemplateService.REFERENCE_CLASS_MEMBERSHIP,
+                "PENDING");
+    }
+
+    @Transactional
+    public void onClassJoinApproved(ClassMembership membership) {
+        if (!properties.isEnabled()) {
+            return;
+        }
+        dispatchToStudent(
+                membership.getUser(),
+                templateService.classJoinApproved(membership),
+                membership.getId(),
+                NotificationTemplateService.REFERENCE_CLASS_MEMBERSHIP,
+                "APPROVED");
+    }
+
+    @Transactional
+    public void onClassJoinRejected(ClassMembership membership) {
+        dispatchMembershipEvent(membership, templateService.classJoinRejected(membership), "REJECTED");
+    }
+
+    @Transactional
+    public void onClassMemberDeactivated(ClassMembership membership) {
+        dispatchMembershipEvent(membership, templateService.classMemberDeactivated(membership), "DEACTIVATED");
+    }
+
+    @Transactional
+    public void onClassMemberReactivated(ClassMembership membership) {
+        dispatchMembershipEvent(membership, templateService.classMemberReactivated(membership), "REACTIVATED");
+    }
+
+    @Transactional
+    public void onAccountSetupCompleted(User classRep, com.classhub.academicclass.AcademicClass academicClass) {
+        if (!properties.isEnabled()) {
+            return;
+        }
+        dispatchToStudent(
+                classRep,
+                templateService.accountSetupCompleted(academicClass),
+                academicClass.getId(),
+                "ACADEMIC_CLASS",
+                "SETUP_COMPLETED");
+    }
+
+    private void dispatchMembershipEvent(
+            ClassMembership membership, NotificationMessage message, String occurrenceKey) {
+        if (!properties.isEnabled()) {
+            return;
+        }
+        dispatchToStudent(
+                membership.getUser(), message, membership.getId(),
+                NotificationTemplateService.REFERENCE_CLASS_MEMBERSHIP, occurrenceKey);
     }
 
     @Transactional
@@ -151,6 +216,10 @@ public class NotificationOrchestrator {
         if (!eligibilityService.isChannelEligible(student, NotificationChannel.IN_APP)) {
             return;
         }
+        if (notificationRepository.existsByRecipientIdAndTypeAndReferenceIdAndOccurrenceKey(
+                student.getId(), message.eventType(), referenceId, occurrenceKey)) {
+            return;
+        }
         try {
             Notification notification = new Notification(
                     student,
@@ -170,7 +239,7 @@ public class NotificationOrchestrator {
     private void createDeliveries(User student, Notification notification, NotificationMessage message) {
         List<NotificationDelivery> deliveries = new ArrayList<>();
         for (NotificationChannel channel : NotificationChannel.values()) {
-            String skipReason = eligibilityService.eligibilityReason(student, channel);
+            String skipReason = eligibilityService.eligibilityReason(student, channel, message.eventType());
             NotificationDelivery delivery = new NotificationDelivery(notification, student, channel);
             if (skipReason != null) {
                 delivery.markSkipped(skipReason, safeSkipMessage(skipReason));

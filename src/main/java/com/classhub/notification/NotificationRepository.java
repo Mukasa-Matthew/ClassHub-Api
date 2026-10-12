@@ -33,6 +33,9 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     boolean existsByTypeAndReferenceIdAndReferenceType(
             NotificationType type, UUID referenceId, String referenceType);
 
+    boolean existsByRecipientIdAndTypeAndReferenceIdAndOccurrenceKey(
+            UUID recipientId, NotificationType type, UUID referenceId, String occurrenceKey);
+
     @Query("""
             select n from Notification n
             where n.id = :id and n.recipient.id = :recipientId

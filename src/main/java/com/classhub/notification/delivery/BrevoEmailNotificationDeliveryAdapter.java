@@ -10,18 +10,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.util.HtmlUtils;
 
 @Component
 public class BrevoEmailNotificationDeliveryAdapter implements NotificationDeliveryAdapter {
 
     private final NotificationProperties properties;
     private final RestClient restClient;
+    private final NotificationChannelTemplateService templateService;
 
     public BrevoEmailNotificationDeliveryAdapter(
-            NotificationProperties properties, RestClient.Builder restClientBuilder) {
+            NotificationProperties properties,
+            RestClient.Builder restClientBuilder,
+            NotificationChannelTemplateService templateService) {
         this.properties = properties;
         this.restClient = restClientBuilder.build();
+        this.templateService = templateService;
     }
 
     @Override
@@ -64,12 +67,14 @@ public class BrevoEmailNotificationDeliveryAdapter implements NotificationDelive
     private Map<String, Object> payload(
             NotificationDeliveryRequest request, NotificationProperties.Email config) {
         Map<String, Object> payload = new LinkedHashMap<>();
+        NotificationChannelTemplateService.EmailContent content = templateService.email(request);
         payload.put("sender", Map.of("name", config.getSenderName(), "email", config.getSenderEmail()));
         payload.put("to", List.of(Map.of(
                 "email", request.recipientEmail(),
                 "name", recipientName(request))));
-        payload.put("subject", request.message().title());
-        payload.put("htmlContent", htmlContent(request));
+        payload.put("subject", content.subject());
+        payload.put("htmlContent", content.html());
+        payload.put("textContent", content.plainText());
         payload.put("headers", Map.of("Idempotency-Key", request.deliveryId().toString()));
         if (!isBlank(config.getReplyToEmail())) {
             payload.put("replyTo", Map.of("email", config.getReplyToEmail()));
@@ -82,38 +87,8 @@ public class BrevoEmailNotificationDeliveryAdapter implements NotificationDelive
         return payload;
     }
 
-    private String htmlContent(NotificationDeliveryRequest request) {
-        NotificationMessage message = request.message();
-        String actionUrl = actionUrl(message.actionPath());
-        return """
-                <!doctype html><html><body style="font-family:Arial,sans-serif;color:#17233c">
-                <div style="max-width:600px;margin:auto;padding:24px">
-                  <h2 style="color:#17233c">%s</h2>
-                  <p>Hello %s,</p>
-                  <p style="white-space:pre-line">%s</p>
-                  <p><a href="%s" style="display:inline-block;background:#17233c;color:#fff;padding:12px 18px;text-decoration:none;border-radius:6px">%s</a></p>
-                  <p style="color:#64748b;font-size:12px">This is an automated ClassHub notification.</p>
-                </div></body></html>
-                """.formatted(
-                escape(message.title()),
-                escape(recipientName(request)),
-                escape(message.body()),
-                escape(actionUrl),
-                escape(message.actionLabel()));
-    }
-
-    private String actionUrl(String actionPath) {
-        String base = properties.getWebBaseUrl().replaceAll("/+$", "");
-        String path = isBlank(actionPath) ? "/" : actionPath;
-        return base + (path.startsWith("/") ? path : "/" + path);
-    }
-
     private static String recipientName(NotificationDeliveryRequest request) {
         return isBlank(request.recipientFirstName()) ? "ClassHub student" : request.recipientFirstName();
-    }
-
-    private static String escape(String value) {
-        return HtmlUtils.htmlEscape(value == null ? "" : value);
     }
 
     private static DeliveryResult providerFailure(String provider, HttpStatusCode status) {
